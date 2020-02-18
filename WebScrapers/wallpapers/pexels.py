@@ -1,3 +1,7 @@
+'''
+@author : Sambit Samal
+@copyright : 
+'''
 import cfscrape,bs4
 from os.path import join
 import urllib.parse
