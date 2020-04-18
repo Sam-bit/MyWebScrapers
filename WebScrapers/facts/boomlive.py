@@ -1,60 +1,61 @@
-import os
-import urllib
-
-import cfscrape,bs4
+from facts.db import insert_article, check_if_url_exists
+from facts.utils import *
 _FactCheckedBy = 'Boomlive.In'
-def base_url(url, with_path=False):
-    parsed = urllib.parse.urlparse(url)
-    path = '/'.join(parsed.path.split('/')[:-1]) if with_path else ''
-    parsed = parsed._replace(path=path)
-    parsed = parsed._replace(params='')
-    parsed = parsed._replace(query='')
-    parsed = parsed._replace(fragment='')
-    return parsed.geturl()
-scraper = cfscrape.create_scraper()
 
-def readEachArticle(url,writer=None):
-    scraper = cfscrape.create_scraper()
-    page = scraper.get(url)
-    soup = bs4.BeautifulSoup(page.text, 'html.parser')
-    title = soup.find('h1',class_="entry-title title is-size-2-touch is-2 article-title is-custom-title")
-    print(title.text)
-    authorname = soup.find('a',class_=lambda value: value and value.startswith("author-link")).text
-    print(authorname)
-    textcontent = ''
-    textcontent = textcontent + soup.find('div',class_='single-post-summary common-p').find('div').text
-    contents = soup.find('div',class_='content details-content-story').find('div',class_ = 'story').find_all('p')
-    for content in contents:
-        textcontent = textcontent + content.text.replace('\n','')
-    updateddate = soup.find('span',class_="convert-to-localtime").attrs.get('data-datestring')
-    print(updateddate)
-    print(textcontent)
-readEachArticle('https://www.boomlive.in/fake-news/up-police-debunk-false-communal-claim-about-meat-thrown-at-a-temple-7180')
-    #writer.writerow({'article_url':repr(url),
-    #                 'article_title':repr(title.text),
-    #                 'article_date':repr(updateddate),
-    #                 'article_content':repr(textcontent),
-    #                 'article_checked_by':repr(authorname),
-    #                 'article_site_name':'\''+_FactCheckedBy+'\''})
+def readEachArticle(url,thumbnail,conn):
+    soup = getUTF8Soup(url)
+    if soup.find("div",class_ = "bg-404") is not None or soup.find('h1',class_="entry-title title is-size-2-touch is-2 article-title is-custom-title") is None:
+        return
+    else:
+        title = soup.find('h1',class_="entry-title title is-size-2-touch is-2 article-title is-custom-title")
+        authorname = soup.find('a',class_=lambda value: value and value.startswith("author-link")).text if soup.find('a',class_=lambda value: value and value.startswith("author-link")) is not None else 'BoomLive Staff'
+        textcontent = ''
+        if soup.find_all('div', class_='single-post-summary common-p') is not None and len(
+                soup.find_all('div', class_='single-post-summary common-p')) > 0:
+            summarytag =soup.find_all('div',class_='single-post-summary common-p')[0]
+            textcontent = textcontent + summarytag.find('div').text
+        storytag = soup.find_all('div',class_ = 'story')
+        for tag in storytag:
+            contents = tag.find_all('p')
+            for content in contents:
+                textcontent = textcontent + content.text.replace('\n','').replace('\t','')
+        updateddate = soup.find('span',class_="convert-to-localtime").attrs.get('data-datestring')
+        fact_verdict = ''
+        article_claim = ''
+        if soup.find('div',class_='claim-review-block') is not None:
+            fact_verdict = soup.find('div',class_= 'claim-review-block').find_all('span',class_ = 'value')[-1].text
+            article_claim = soup.find('div',class_= 'claim-review-block').find_all('span',class_ = 'value')[0].text.replace('\n','').replace('\t','')
+        article = (unicodetoascii(url),
+                   unicodetoascii(title.text),
+                   thumbnail,
+                   unicodetoascii(updateddate[0:10]),
+                   unicodetoascii(article_claim),
+                   unicodetoascii(textcontent),
+                   unicodetoascii(authorname),
+                   fact_verdict,
+                   _FactCheckedBy
+                   )
+        insert_article(conn, article)
 
+def boomlive_fetch(conn):
+    i = 1
+    while True:
+        url = 'https://www.boomlive.in/fake-news/%d'% i
+        print(url)
+        soup = getUTF8Soup(url)
+        if not soup.find('div',class_ = 'category-articles-list listing-article-list'):
+            break
+        else:
+            for article in soup.find_all('div',class_='card-wrapper horizontal-card'):
+                article_url = urllib.parse.urljoin(base_url(url), article.find('a')['href'])
+                record_found = check_if_url_exists(conn, article_url)
+                if not record_found:
+                    if article.find('a', class_='fa-post-thumbnail') is not None:
+                        thumbnail = imageurl_to_base64(
+                            article.find('a', class_='fa-post-thumbnail').find('img').attrs.get('src'))
+                    else:
+                        thumbnail = imageurl_to_base64(
+                            article.find('div', class_='herald-post-thumbnail herald-format-icon-middle').find('a').find('img').attrs.get('src'))
+                    readEachArticle(article_url,thumbnail, conn)
 
-#def boomlive_fetch(csv_file,writer):
-#    i = 1
-#    while True:
-#        url = 'https://www.boomlive.in/fake-news/%d'% i
-#
-#        scraper = cfscrape.create_scraper()
-#        page = scraper.get(url)
-#        soup = bs4.BeautifulSoup(page.text, 'html.parser')
-#        if not soup.find('div',class_ = 'category-articles-list listing-article-list'):
-#            break
-#        else:
-#            for article in soup.find_all('div',class_='card-wrapper horizontal-card'):
-#                article_url = urllib.parse.urljoin(base_url(url), article.find('a')['href'])
-#                csv_file.seek(0, os.SEEK_SET)
-#                line_found = any(article_url in line for line in csv_file)
-#                if not line_found:
-#                    csv_file.seek(0, os.SEEK_END)
-#                    readEachArticle(article_url, writer)
-#        i = i + 1
-#
+        i = i + 1
