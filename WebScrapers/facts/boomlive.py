@@ -1,6 +1,6 @@
 from facts.db import insert_article, check_if_url_exists
 from facts.utils import *
-_FactCheckedBy = 'Boomlive.In'
+_FactCheckedById = 2
 
 def readEachArticle(url,thumbnail,conn):
     soup = getUTF8Soup(url)
@@ -9,33 +9,36 @@ def readEachArticle(url,thumbnail,conn):
     else:
         title = soup.find('h1',class_="entry-title title is-size-2-touch is-2 article-title is-custom-title")
         authorname = soup.find('a',class_=lambda value: value and value.startswith("author-link")).text if soup.find('a',class_=lambda value: value and value.startswith("author-link")) is not None else 'BoomLive Staff'
+        article_claim = ''
+        fact_verdict = ''
         textcontent = ''
         if soup.find_all('div', class_='single-post-summary common-p') is not None and len(
                 soup.find_all('div', class_='single-post-summary common-p')) > 0:
-            summarytag =soup.find_all('div',class_='single-post-summary common-p')[0]
-            textcontent = textcontent + summarytag.find('div').text
-        storytag = soup.find_all('div',class_ = 'story')
-        for tag in storytag:
-            contents = tag.find_all('p')
-            for content in contents:
-                textcontent = textcontent + content.text.replace('\n','').replace('\t','')
+            if(soup.find_all('div',class_='single-post-summary common-p')[0].find('div') is not None):
+                article_claim = soup.find_all('div',class_='single-post-summary common-p')[0].find('div').text
+            else:
+                article_claim = soup.find_all('div', class_='single-post-summary common-p')[0].text
+        for tag in soup.find_all('div', class_='story'):
+            for content in tag.find_all('p'):
+                textcontent = textcontent + (" ".join(content.strings)).replace('\n', ' ').replace('\t', ' ') + " "
         updateddate = soup.find('span',class_="convert-to-localtime").attrs.get('data-datestring')
-        fact_verdict = ''
-        article_claim = ''
-        if soup.find('div',class_='claim-review-block') is not None:
-            fact_verdict = soup.find('div',class_= 'claim-review-block').find_all('span',class_ = 'value')[-1].text
-            article_claim = soup.find('div',class_= 'claim-review-block').find_all('span',class_ = 'value')[0].text.replace('\n','').replace('\t','')
+
+        if soup.find('div', class_='claim-review-block') is not None:
+            fact_verdict = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[-1].text
+            article_claim = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[0].text.replace('\n', ' ').replace('\t', '')
         article = (unicodetoascii(url),
                    unicodetoascii(title.text),
                    thumbnail,
-                   unicodetoascii(updateddate[0:10]),
+                   unicodetoascii(updateddate),
                    unicodetoascii(article_claim),
                    unicodetoascii(textcontent),
                    unicodetoascii(authorname),
-                   fact_verdict,
-                   _FactCheckedBy
+                   'False' if any(x in title.text.lower() for x in ('no', 'false', 'did not', 'didn\'t', 'fake', 'old ', 'old,', 'cannot', 'can\'t', 'photoshop', 'hoax',
+                   'misreport', 'mis-report','misquote','mislead','fox','plagiarise','shared as','doesnt','doesn\'t','shared with'))==True and fact_verdict =='' else fact_verdict,
+                   _FactCheckedById
                    )
-        insert_article(conn, article)
+        print(article)
+        #insert_article(conn, article)
 
 def boomlive_fetch(conn):
     i = 1
@@ -50,12 +53,12 @@ def boomlive_fetch(conn):
                 article_url = urllib.parse.urljoin(base_url(url), article.find('a')['href'])
                 record_found = check_if_url_exists(conn, article_url)
                 if not record_found:
-                    if article.find('a', class_='fa-post-thumbnail') is not None:
-                        thumbnail = imageurl_to_base64(
-                            article.find('a', class_='fa-post-thumbnail').find('img').attrs.get('src'))
+                    thumbnail = imageurl_to_base64(
+                            article.find('figure', class_='card-image').find('a').find('img').attrs.get('data-src'))
+                    if '/fast-check/' not in article_url:
+                        readEachArticle(article_url,thumbnail, conn)
                     else:
-                        thumbnail = imageurl_to_base64(
-                            article.find('div', class_='herald-post-thumbnail herald-format-icon-middle').find('a').find('img').attrs.get('src'))
-                    readEachArticle(article_url,thumbnail, conn)
-
+                        continue
+                else:
+                    return
         i = i + 1

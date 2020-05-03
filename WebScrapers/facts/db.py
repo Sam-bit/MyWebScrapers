@@ -13,17 +13,16 @@ def create_table():
     conn = create_connection()
     sql_create_articles_table = """
     CREATE TABLE "articles" (
-	"id"	INTEGER PRIMARY KEY AUTOINCREMENT,
 	"article_url"	TEXT NOT NULL,
 	"article_title"	TEXT NOT NULL,
 	"article_thumbnail"	TEXT,
 	"article_date"	TEXT,
-	"article_claim"	TEXT,
+	"article_subtitle"	TEXT,
 	"article_content"	TEXT NOT NULL,
 	"article_checked_by"	TEXT,
 	"article_verdict"	TEXT,
-	"article_site_name"	INTEGER,
-	"sync_date"	date
+	"article_site_id"	INTEGER,
+	"article_sync_date"	date
 )
     """
     try:
@@ -32,7 +31,7 @@ def create_table():
     except sqlite3.Error as e:
         print(e)
 def insert_article(conn,article):
-    sql = '''INSERT INTO articles(article_url,article_title,article_thumbnail,article_date,article_claim,article_content,article_checked_by,article_verdict,article_site_name)
+    sql = '''INSERT INTO articles(article_url,article_title,article_thumbnail,article_date,article_subtitle,article_content,article_checked_by,article_verdict,article_site_id)
             VALUES(?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
     cur.execute(sql,article)
@@ -42,7 +41,7 @@ def insert_article(conn,article):
 
 def check_if_url_exists(conn,url):
     cur = conn.cursor()
-    cur.execute("SELECT id FROM articles WHERE article_url = ?",(url,))
+    cur.execute("SELECT rowid FROM articles WHERE article_url = ?",(url,))
     data = cur.fetchall()
     if len(data) == 0:
         return False
