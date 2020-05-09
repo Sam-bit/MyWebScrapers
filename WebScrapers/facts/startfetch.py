@@ -7,6 +7,6 @@ conn = create_connection()
 
 altnews_fetch(conn)
 boomlive_fetch(conn)
-#snopes_fetch(conn)
+snopes_fetch(conn)
 #csv_to_json(filename)
 #push_db_to_cloud(conn)

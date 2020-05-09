@@ -1,5 +1,5 @@
 import urllib
-from datetime import datetime
+from datetime import datetime,timedelta,time
 
 import bs4
 import base64
@@ -56,4 +56,4 @@ def unicodetoascii(text):
     return TEXT
 
 def format_date(from_date,from_format):
-    return datetime.strptime(from_date,from_format).strftime('%Y-%m-%d')
+    return datetime.strptime(from_date,from_format).strftime('%Y-%m-%d %H:%M:%S')

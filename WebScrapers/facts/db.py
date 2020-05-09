@@ -21,6 +21,7 @@ def create_table():
 	"article_content"	TEXT NOT NULL,
 	"article_checked_by"	TEXT,
 	"article_verdict"	TEXT,
+	"article_alt_verdict" TEXT,
 	"article_site_id"	INTEGER,
 	"article_sync_date"	date
 )
@@ -31,8 +32,8 @@ def create_table():
     except sqlite3.Error as e:
         print(e)
 def insert_article(conn,article):
-    sql = '''INSERT INTO articles(article_url,article_title,article_thumbnail,article_date,article_subtitle,article_content,article_checked_by,article_verdict,article_site_id)
-            VALUES(?,?,?,?,?,?,?,?,?)'''
+    sql = '''INSERT INTO articles(article_url,article_title,article_thumbnail,article_date,article_subtitle,article_content,article_checked_by,article_verdict,article_alt_verdict,article_site_id)
+            VALUES(?,?,?,?,?,?,?,?,?,?)'''
     cur = conn.cursor()
     cur.execute(sql,article)
     conn.commit()
