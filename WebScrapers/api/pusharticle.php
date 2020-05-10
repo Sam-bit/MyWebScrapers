@@ -32,7 +32,7 @@ $sql = "INSERT INTO $table (
                             '$article_title',
                             '$article_thumbnail',
                             '$article_date',
-							'$article_subtitle'
+							'$article_subtitle',
                             '$article_content',
                             '$article_checked_by',
                             '$article_verdict',
@@ -40,6 +40,7 @@ $sql = "INSERT INTO $table (
 							'$article_site_id',
                             '$article_sync_date'
                             )";
+							
 $result = $db->query($sql);
 $db->close();
 return;
