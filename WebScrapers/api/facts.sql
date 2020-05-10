@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: May 09, 2020 at 08:04 PM
+-- Generation Time: May 10, 2020 at 12:45 PM
 -- Server version: 10.4.11-MariaDB
 -- PHP Version: 7.4.5
 
@@ -20,6 +20,8 @@ SET time_zone = "+00:00";
 --
 -- Database: `facts`
 --
+CREATE DATABASE IF NOT EXISTS `facts` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `facts`;
 
 -- --------------------------------------------------------
 
@@ -31,8 +33,8 @@ CREATE TABLE `articles` (
   `article_url` text NOT NULL,
   `article_title` text NOT NULL,
   `article_thumbnail` text DEFAULT NULL,
-  `article_date` double DEFAULT NULL,
-  `article_subtitle` double DEFAULT NULL,
+  `article_date` datetime DEFAULT NULL,
+  `article_subtitle` text DEFAULT NULL,
   `article_content` text NOT NULL,
   `article_checked_by` text DEFAULT NULL,
   `article_verdict` text DEFAULT NULL,
