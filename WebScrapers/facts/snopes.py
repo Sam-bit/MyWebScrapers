@@ -62,7 +62,7 @@ def readEachArticle(url,thumbnail, conn):
         insert_article(conn,article)
 
 def snopes_fetch(conn):
-    i = 486
+    i = 880
     while True:
         url = 'https://www.snopes.com/fact-check/page/%d/'% i
         print(url)
