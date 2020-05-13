@@ -1,6 +1,6 @@
 <?php
 require_once('db.php');
-$query = 'SELECT IFNULL(max(article_date),"1900-01-01 00:00:00") as MaxArticleDate FROM articles';
+$query = 'SELECT ifnull(article_date,"1900-01-01") as MaxArticleDate FROM articles order by article_date desc limit 1';
 $stm = $db->prepare($query);
 $stm->execute();
 $row = $stm->fetch(PDO::FETCH_ASSOC);
