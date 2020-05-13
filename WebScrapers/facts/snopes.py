@@ -6,7 +6,7 @@ _FactCheckedById = 3
 def readEachArticle(url,thumbnail, conn):
     soup = getUTF8Soup(url)
     title = soup.find('h1',class_="title")
-    authorname = soup.find('a',class_="author").text
+    authorname = soup.find('a',class_="author").text if soup.find('a',class_="author") is not None else soup.find('span',class_="author").text
     if 'This article has been moved here:' in soup.prettify():
         pass
     else:
@@ -44,6 +44,8 @@ def readEachArticle(url,thumbnail, conn):
         textcontent = textcontent + soup.find('div',class_='content').text.replace('\n', ' ').replace('\t', ' ')
         textcontent = " ".join(textcontent.split())
         head,sep,tail = textcontent.partition(' Snopes.com Since 1994')
+        if article_claim.strip()=='':
+            article_claim = soup.find("meta", property="og:description")["content"]
         article = (unicodetoascii(url),
                    unicodetoascii(title.text),
                    thumbnail,
@@ -62,7 +64,7 @@ def readEachArticle(url,thumbnail, conn):
         insert_article(conn,article)
 
 def snopes_fetch(conn):
-    i = 880
+    i = 1
     while True:
         url = 'https://www.snopes.com/fact-check/page/%d/'% i
         print(url)
@@ -76,5 +78,6 @@ def snopes_fetch(conn):
                     thumbnail = imageurl_to_base64(
                         article.find('figure', class_='featured-media').find('img').attrs.get('data-lazy-src'))
                     readEachArticle(article.find('a')['href'],thumbnail, conn)
-
+                else:
+                    return
         i = i + 1

@@ -3,13 +3,14 @@ import json
 import requests
 API_MAXDATE = "http://localhost//api//getmaxdate.php"
 API_ENDPOINT = "http://localhost//api//pusharticle.php"
-def push_db_to_cloud(conn):
-    req = requests.get(API_MAXDATE)
-    #print(req)
-    result = req.json()
-    maxdate = result['MaxArticleDate']
+def push_article_to_cloud(conn):
+    # req = requests.get(API_MAXDATE)
+    # #print(req)
+    # result = req.json()
+    # maxdate = result['MaxArticleDate']
     cur = conn.cursor()
-    cur.execute('SELECT * FROM articles where article_date >= ? order by article_date', [maxdate])
+    #cur.execute('SELECT * FROM articles where article_date > "%s" order by article_date' % maxdate)
+    cur.execute('SELECT * FROM articles order by article_date')
     rows = cur.fetchall()
     for row in rows:
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")

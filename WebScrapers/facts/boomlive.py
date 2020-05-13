@@ -5,7 +5,7 @@ from facts.utils import *
 _FactCheckedById = 2
 
 def readEachArticle(url,thumbnail,conn):
-# def readEachArticle(url):
+#def readEachArticle(url):
     soup = getUTF8Soup(url)
     if soup.find("div",class_ = "bg-404") is not None or soup.find('h1',class_="entry-title title is-size-2-touch is-2 article-title is-custom-title") is None:
         return
@@ -16,32 +16,36 @@ def readEachArticle(url,thumbnail,conn):
         authorname = soup.find('a',class_=lambda value: value and value.startswith("author-link")).text if soup.find('a',class_=lambda value: value and value.startswith("author-link")) is not None else 'BoomLive Staff'
         article_claim = ''
         fact_verdict = ''
-        textcontent = ''
         if soup.find_all('div', class_='single-post-summary common-p') is not None and len(
                 soup.find_all('div', class_='single-post-summary common-p')) > 0:
             if(soup.find_all('div',class_='single-post-summary common-p')[0].find('div') is not None):
                 article_claim = soup.find_all('div',class_='single-post-summary common-p')[0].find('div').text
             else:
                 article_claim = soup.find_all('div', class_='single-post-summary common-p')[0].text
-        tag = soup.find('div', class_='story')
-        for content in tag.find_all('p'):
-            textcontent = textcontent + (" ".join(content.strings)).replace('\n', ' ').replace('\t', ' ') + " "
-        updateddate = soup.find('span',class_="convert-to-localtime").attrs.get('data-datestring')
-
+        # tag = soup.find('div', class_='story')
+        # for content in tag.findAll('p'):
+        #     textcontent = textcontent + (" ".join(content.strings)).replace('\n', ' ').replace('\t', ' ') + " "
+        #updateddate = soup.find('span',class_="convert-to-localtime").attrs.get('data-datestring')
+        published_time = soup.find("meta", property="article:published_time")["content"][0:19]
         if soup.find('div', class_='claim-review-block') is not None:
             fact_verdict = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[-1].text
             article_claim = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[0].text.replace('\n', ' ').replace('\t', '')
-        textcontent = textcontent + tag.text.replace('\n', ' ').replace('\t', ' ')
-        textcontent = " ".join(textcontent.split())
+        # textcontent = textcontent + tag.text.replace('\n', ' ').replace('\t', ' ')
         string = soup.prettify()
-        pattern = '(?:"alternateName" : ")(.*?)(?:")'
-        match = re.search(pattern, string)
-        if match and fact_verdict == '':
-            fact_verdict = match.group(1)
+        bodypattern = '(?:"articleBody" : ")(.*?)(?:")'
+        bodymatch = re.search(bodypattern, string)
+        if bodymatch:
+            textcontent = " ".join(re.sub("<.*?>", "", bodymatch.group(1)).replace('\n', ' ').replace('\t', '').split())
+        else:
+            textcontent = ''
+        verdictpattern = '(?:"alternateName" : ")(.*?)(?:")'
+        verdictmatch = re.search(verdictpattern, string)
+        if verdictmatch and fact_verdict == '':
+            fact_verdict = verdictmatch.group(1)
         article = (unicodetoascii(url),
                    unicodetoascii(title.text),
                    thumbnail,
-                   unicodetoascii(updateddate),
+                   format_date(published_time, "%Y-%m-%dT%H:%M:%S"),
                    unicodetoascii(article_claim),
                    unicodetoascii(textcontent),
                    unicodetoascii(authorname),
@@ -52,9 +56,9 @@ def readEachArticle(url,thumbnail,conn):
                    'doesn\'t', 'shared with','wrong')) == True and fact_verdict == '' else '',
                    _FactCheckedById
                    )
-        # print(article)
+        #print(article)
         insert_article(conn, article)
-#readEachArticle('https://www.boomlive.in/fake-news/us-students-sing-national-anthem-to-thank-india-for-hydroxychloroquine-a-factcheck-7804')
+#readEachArticle('https://www.boomlive.in/fake-news/photos-of-mould-on-leather-goods-in-malaysian-store-viral-as-india-8072')
 def boomlive_fetch(conn):
     i = 1
     while True:
@@ -71,6 +75,5 @@ def boomlive_fetch(conn):
                     thumbnail = imageurl_to_base64(
                             article.find('figure', class_='card-image').find('a').find('img').attrs.get('data-src'))
                     readEachArticle(article_url,thumbnail, conn)
-                else:
-                    return
+
         i = i + 1
