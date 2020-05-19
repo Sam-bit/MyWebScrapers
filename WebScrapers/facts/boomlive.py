@@ -1,6 +1,7 @@
 import re
 
 from facts.db import insert_article, check_if_url_exists
+from facts.sync_to_cloud import push_to_firebase
 from facts.utils import *
 _FactCheckedById = 2
 
@@ -58,6 +59,7 @@ def readEachArticle(url,thumbnail,conn):
                    )
         #print(article)
         insert_article(conn, article)
+        #push_to_firebase(conn, url)
 #readEachArticle('https://www.boomlive.in/fake-news/photos-of-mould-on-leather-goods-in-malaysian-store-viral-as-india-8072')
 def boomlive_fetch(conn):
     i = 1
@@ -75,5 +77,6 @@ def boomlive_fetch(conn):
                     thumbnail = imageurl_to_base64(
                             article.find('figure', class_='card-image').find('a').find('img').attrs.get('data-src'))
                     readEachArticle(article_url,thumbnail, conn)
-
+                else:
+                    return
         i = i + 1

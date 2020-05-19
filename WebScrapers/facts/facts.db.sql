@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "articles" (
 	"article_verdict"	TEXT,
 	"article_alt_verdict"	TEXT,
 	"article_site_id"	INTEGER,
-	"article_sync_date"	date
+	"article_is_pushed"	INTEGER
 );
 DROP TABLE IF EXISTS "sources";
 CREATE TABLE IF NOT EXISTS "sources" (
@@ -24,6 +24,7 @@ CREATE TABLE IF NOT EXISTS "sources" (
 	"src_is_active"	INTEGER DEFAULT 1,
 	"src_country"	TEXT,
 	"src_supported_by"	TEXT,
-	"src_language"	TEXT
+	"src_language"	TEXT,
+	"src_added_date"	TEXT DEFAULT (datetime('now','localtime'))
 );
 COMMIT;

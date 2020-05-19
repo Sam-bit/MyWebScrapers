@@ -1,6 +1,7 @@
 import re
 
 from facts.db import insert_article, check_if_url_exists
+from facts.sync_to_cloud import push_to_firebase
 from facts.utils import *
 _FactCheckedById = 3
 def readEachArticle(url,thumbnail, conn):
@@ -62,6 +63,7 @@ def readEachArticle(url,thumbnail, conn):
                    )
         # print(article)
         insert_article(conn,article)
+        #push_to_firebase(conn, url)
 
 def snopes_fetch(conn):
     i = 1
