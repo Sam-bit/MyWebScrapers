@@ -1,9 +1,10 @@
-#https://www.snopes.com/fact-check/page/2/
-#https://www.boomlive.in/fake-news/2
-#https://www.altnews.in/page/1/
+##https://www.snopes.com/fact-check/page/2/
+##https://www.boomlive.in/fake-news/2
+##https://www.altnews.in/page/1/
 #https://www.thequint.com/news/webqoof/2
 #https://theprint.in/category/hoaxposed/page/2/
-
+#https://www.newschecker.in/category/15751205/viral/page/1
+#http://newsmobile.in/articles/category/nm-fact-checker/page/2/
 '''
 select * from articles where article_content is null or article_content ='';
 delete from articles;

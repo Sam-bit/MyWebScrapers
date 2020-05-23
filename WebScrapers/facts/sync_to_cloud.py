@@ -1,6 +1,7 @@
 from datetime import datetime
 import json
 import requests
+from langdetect import detect
 from firebase import firebase
 API_GETALLARTICLEURLS = 'http://localhost//api//getallarticleurls.php'
 API_MAXDATE = "http://localhost//api//getmaxdate.php"
@@ -74,7 +75,9 @@ def push_article_to_firebase(conn):
         FBConn.post('/articles/',data)
 def push_article_to_cloud(conn):
     cur = conn.cursor()
-    cur.execute('SELECT * FROM articles where article_is_pushed is NULL order by article_date desc')
+    from langdetect import DetectorFactory
+    DetectorFactory.seed = 0
+    cur.execute('SELECT * FROM articles WHERE article_is_pushed is NULL order by article_date')
     #cur.execute('SELECT * FROM articles order by article_date desc')
     rows = cur.fetchall()
     for row in rows:
@@ -88,7 +91,6 @@ def push_article_to_cloud(conn):
         row_article_verdict = row[7]
         row_article_alt_verdict = row[8]
         row_article_site_id = row[9]
-        row_article_is_pushed = row[10]
         data = {
                 'insert_option' : 'INSERT',
                 'push_article_url' : row_article_url,
@@ -103,9 +105,32 @@ def push_article_to_cloud(conn):
                 'push_article_site_id' : row_article_site_id,
                 'push_article_is_pushed' : 1
                 }
+        conn.execute("""UPDATE articles SET article_alt_verdict = '%s' WHERE article_url = '%s';""" % (
+            'False' if any(x in row_article_title.lower() for x in (
+                'no', 'false', 'did not', 'didn\'t', 'fake', 'old ', 'old,', 'cannot', 'can\'t', 'photoshop', 'hoax',
+                'misreport', 'mis-report', 'misquote', 'mislead', 'fox', 'plagiarise', 'shared as', 'doesnt',
+                'doesn\'t', 'shared with', 'wrong', 'unrelated')) == True and row_article_verdict in (
+                           'Lost Legend'
+                           'Research In Progress'
+                           'Miscaptioned'
+                           'Mostly False'
+                           'Unproven'
+                           'FALSE, SATIRE'
+                           'SATIRE'
+                           'FASLE'
+                           'MISLEADING'
+                           'Unknown'
+                           'Outdated'
+                           'Misattributed'
+                           'Scam'
+                           'Legend'
+                           'Misleading'
+                           'Labeled Satire'
+                           'Hard to Categorise') else '', row_article_url))
+        conn.execute("""UPDATE articles SET article_is_pushed = 1 WHERE article_url = '%s';""" % row_article_url)
+        conn.execute("""UPDATE articles SET article_language = '%s' WHERE article_url = '%s';""" % (detect(row_article_title+row_article_subtitle) if (row_article_title+row_article_subtitle).strip() != '' else'',row_article_url))
         print('pushing '+str(row_article_url))
         r = requests.post(url=API_ARTICLE_ENDPOINT, data=data)
-        conn.execute("""UPDATE articles SET article_is_pushed = 1 WHERE article_url = '%s';""" % row_article_url)
         conn.commit()
 def push_sources_to_cloud(conn):
     cur = conn.cursor()
