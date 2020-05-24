@@ -15,14 +15,8 @@ def readEachArticle(url,thumbnail,conn):
     else:
         title = soup.find('h1',class_="entry-title title is-size-2-touch is-2 article-title is-custom-title")
         authorname = soup.find('a',class_=lambda value: value and value.startswith("author-link")).text if soup.find('a',class_=lambda value: value and value.startswith("author-link")) is not None else 'BoomLive Staff'
-        article_claim = ''
         fact_verdict = ''
-        if soup.find_all('div', class_='single-post-summary common-p') is not None and len(
-                soup.find_all('div', class_='single-post-summary common-p')) > 0:
-            if(soup.find_all('div',class_='single-post-summary common-p')[0].find('div') is not None):
-                article_claim = soup.find_all('div',class_='single-post-summary common-p')[0].find('div').text
-            else:
-                article_claim = soup.find_all('div', class_='single-post-summary common-p')[0].text
+        article_claim = soup.find("meta", property="og:description")["content"]
         # tag = soup.find('div', class_='story')
         # for content in tag.findAll('p'):
         #     textcontent = textcontent + (" ".join(content.strings)).replace('\n', ' ').replace('\t', ' ') + " "
@@ -30,7 +24,7 @@ def readEachArticle(url,thumbnail,conn):
         published_time = soup.find("meta", property="article:published_time")["content"][0:19]
         if soup.find('div', class_='claim-review-block') is not None:
             fact_verdict = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[-1].text
-            article_claim = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[0].text.replace('\n', ' ').replace('\t', '')
+            #article_claim = soup.find('div', class_='claim-review-block').find_all('span', class_='value')[0].text.replace('\n', ' ').replace('\t', '')
         # textcontent = textcontent + tag.text.replace('\n', ' ').replace('\t', ' ')
         string = soup.prettify()
         bodypattern = '(?:"articleBody" : ")(.*?)(?:")'
