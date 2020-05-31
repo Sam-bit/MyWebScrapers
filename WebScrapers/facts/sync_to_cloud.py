@@ -127,10 +127,11 @@ def push_article_to_cloud(conn):
                            'Misleading'
                            'Labeled Satire'
                            'Hard to Categorise') else '', row_article_url))
-        conn.execute("""UPDATE articles SET article_is_pushed = 1 WHERE article_url = '%s';""" % row_article_url)
+
         conn.execute("""UPDATE articles SET article_language = '%s' WHERE article_url = '%s';""" % (detect(row_article_title+row_article_subtitle) if (row_article_title+row_article_subtitle).strip() != '' else'',row_article_url))
         print('pushing '+str(row_article_url))
         r = requests.post(url=API_ARTICLE_ENDPOINT, data=data)
+        conn.execute("""UPDATE articles SET article_is_pushed = 1 WHERE article_url = '%s';""" % row_article_url)
         conn.commit()
 def push_sources_to_cloud(conn):
     cur = conn.cursor()
