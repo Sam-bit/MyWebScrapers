@@ -105,33 +105,36 @@ def push_article_to_cloud(conn):
                 'push_article_site_id' : row_article_site_id,
                 'push_article_is_pushed' : 1
                 }
-        conn.execute("""UPDATE articles SET article_alt_verdict = '%s' WHERE article_url = '%s';""" % (
+
+        conn.execute("""UPDATE articles SET article_alt_verdict = :alt WHERE article_url = :url;""" , {"alt":
             'False' if any(x in row_article_title.lower() for x in (
                 'no', 'false', 'did not', 'didn\'t', 'fake', 'old ', 'old,', 'cannot', 'can\'t', 'photoshop', 'hoax',
                 'misreport', 'mis-report', 'misquote', 'mislead', 'fox', 'plagiarise', 'shared as', 'doesnt',
                 'doesn\'t', 'shared with', 'wrong', 'unrelated')) == True and row_article_verdict in (
-                           'Lost Legend'
-                           'Research In Progress'
-                           'Miscaptioned'
-                           'Mostly False'
-                           'Unproven'
-                           'FALSE, SATIRE'
-                           'SATIRE'
-                           'FASLE'
-                           'MISLEADING'
-                           'Unknown'
-                           'Outdated'
-                           'Misattributed'
-                           'Scam'
-                           'Legend'
-                           'Misleading'
-                           'Labeled Satire'
-                           'Hard to Categorise') else '', row_article_url))
+                           'Lost Legend',
+                           'Research In Progress',
+                           'Miscaptioned',
+                           'Mostly False',
+                           'Unproven',
+                           'FALSE, SATIRE',
+                           'SATIRE',
+                           'FASLE',
+                           'MISLEADING',
+                           'Unknown',
+                           'Outdated',
+                           'Misattributed',
+                           'Scam',
+                           'Legend',
+                           'Misleading',
+                           'Labeled Satire',
+                           'Hard to Categorise') else '', "url":row_article_url})
 
-        conn.execute("""UPDATE articles SET article_language = '%s' WHERE article_url = '%s';""" % (detect(row_article_title+row_article_subtitle) if (row_article_title+row_article_subtitle).strip() != '' else'',row_article_url))
-        print('pushing '+str(row_article_url))
+        conn.execute("""UPDATE articles SET article_language = :lang WHERE article_url = :url;""" , {"lang":
+        detect(row_article_title + row_article_subtitle) if (row_article_title + row_article_subtitle).strip() != '' else '',
+        "url":row_article_url})
+        print('pushing ' + str(row_article_url))
         r = requests.post(url=API_ARTICLE_ENDPOINT, data=data)
-        conn.execute("""UPDATE articles SET article_is_pushed = 1 WHERE article_url = '%s';""" % row_article_url)
+        conn.execute("""UPDATE articles SET article_is_pushed = 1 WHERE article_url = :url;""" , {"url":row_article_url})
         conn.commit()
 def push_sources_to_cloud(conn):
     cur = conn.cursor()
